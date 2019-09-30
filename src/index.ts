@@ -16,13 +16,23 @@ async function failScript(result: string): Promise<void> {
   return setFailed(message);
 }
 
-async function runScript(): Promise<number> {
-  await exec('npm', ['ci'], { cwd: scriptPath });
+let myOutput = '';
 
-  return exec('npm', ['run', scriptName], {
+async function runScript(): Promise<void> {
+  await exec('npm', ['ci'], { cwd: scriptPath, silent: true });
+
+  exec('npm', ['run', scriptName], {
     cwd: scriptPath,
-    listeners: { errline: failScript },
-  });
+    silent: true,
+    listeners: {
+      stdout: (data: Buffer) => {
+        myOutput += data.toString();
+      },
+      stderr: (data: Buffer) => {
+        myOutput += data.toString();
+      },
+    },
+  }).catch((e) => failScript(myOutput));
 }
 
 runScript().catch((error) => setFailed(error.message));
